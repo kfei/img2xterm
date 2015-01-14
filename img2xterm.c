@@ -1,28 +1,3 @@
-/*
- *                THE STRONGEST PUBLIC LICENSE
- *                  Draft 1, November 2010
- *
- * Everyone is permitted to copy and distribute verbatim or modified
- * copies of this license document, and changing it is allowed as long
- * as the name is changed.
- *
- *                  THE STRONGEST PUBLIC LICENSE
- *   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
- *
- *  ⑨. This license document permits you to DO WHAT THE FUCK YOU WANT TO
- *      as long as you APPRECIATE CIRNO AS THE STRONGEST IN GENSOKYO.
- *
- * This program is distributed in the hope that it will be THE STRONGEST,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * USEFULNESS or FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-/* 
- * img2xterm -- convert images to 256 color block elements for use in cowfiles
- * written in the spirit of img2cow, with modified (bugfixed) code from
- * xterm256-conv2 by Wolfgang Frisch (xororand@frexx.de)
- */
-
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
@@ -51,7 +26,7 @@ double* labtable;
 const unsigned char valuerange[] = { 0x00, 0x5f, 0x87, 0xaf, 0xd7, 0xff };
 unsigned long oldfg = color_undef;
 unsigned long oldbg = color_undef;
-int perceptive = 0, cowheader;
+int perceptive = 0;
 double chroma_weight = 1.0;
 
 #ifndef NO_CURSES
@@ -203,7 +178,7 @@ void bifurcate(FILE* file, unsigned long color1, unsigned long color2, char* bst
 {
 	unsigned long fg = oldfg;
 	unsigned long bg = oldbg;
-	char* str = cowheader ? "\\N{U+2584}" : "\xe2\x96\x84";
+	char* str = "\xe2\x96\x84";
 	
 	if (color1 == color2)
 	{
@@ -219,7 +194,7 @@ void bifurcate(FILE* file, unsigned long color1, unsigned long color2, char* bst
 	else
 		if (color2 == color_transparent)
 		{
-			str = cowheader ? "\\N{U+2580}" : "\xe2\x96\x80";
+			str = "\xe2\x96\x80";
 			bg = color2;
 			fg = color1;
 		}
@@ -251,17 +226,17 @@ void bifurcate(FILE* file, unsigned long color1, unsigned long color2, char* bst
 	if (bg != oldbg)
 	{
 		if (bg == color_transparent)
-			fputs(cowheader ? "\\e[49m" : "\e[49m", file);
+			fputs("\e[49m", file);
 		else
-			fprintf(file, cowheader ? "\\e[48;5;%lum" : "\e[48;5;%lum", bg);
+			fprintf(file, "\e[48;5;%lum", bg);
 	}
 
 	if (fg != oldfg)
 	{
 		if (fg == color_undef)
-			fputs(cowheader ? "\\e[39m" : "\e[39m", file);
+			fputs("\e[39m", file);
 		else
-			fprintf(file, cowheader ? "\\e[38;5;%lum" : "\e[38;5;%lum", fg);
+			fprintf(file, "\e[38;5;%lum", fg);
 	}
 	
 	oldbg = bg;
@@ -334,8 +309,6 @@ Usage: %s [ options ] [ infile ] [ outfile ]\n\n\
 Convert bitmap images to 256 color block elements suitable for display in xterm\n\
 and similar terminal emulators.\n\n\
 Options:\n\
-  -c, --cow                   generate a cowfile header\n\
-                              (default behavior if invoked as img2cow)\n\
   -h, --help                  display this message\n"
 #ifndef NO_CURSES
 "\
@@ -343,15 +316,9 @@ Options:\n\
 "
 #endif
 "\
-  -l, --stem-length [length]  length of the speech bubble stem when generating\n\
-                              cowfiles (default: 4)\n\
   -m, --margin [width]        add a margin to the left of the image\n\
   -p, --perceptive            use the CIE94 color difference formula for color\n\
                               conversion instead of simple RGB linear distance\n\
-  -s, --stem-margin [width]   margin for the speech bubble stem when generating\n\
-                              cowfiles (default: 11)\n\
-  -t, --stem-continue         continue drawing the speech bubble stem into the\n\
-                              transparent areas of the image\n\
   -w, --chroma-weight [mult]  weighting for chroma in --perceptive and --yiq\n\
                               modes (default: 1)\n\
   -y, --yiq                   use linear distance in the YIQ color space\n\
@@ -367,8 +334,6 @@ Examples:\n\
                               chroma\n\
   img2xterm banner.png motd   save a bitmap image as a text file to display\n\
                               later\n\
-  img2cow rms.png rms.cow     create a cowfile (assuming img2cow is a link to\n\
-                              img2xterm)\n\
 "
 		, binname);
 	exit(ret);
@@ -393,16 +358,11 @@ int main(int argc, char** argv)
 	FILE* outfile = stdout;
 	
 	size_t width1, width2;
-	unsigned long i, j, * row1, * row2, color1, color2, lastpx1, lastpx2, margin = 0;
-	
-	int background = 0;
-	unsigned long stemlen = 4, stemmargin = 11;
+	unsigned long i, * row1, * row2, color1, color2, lastpx1, lastpx2, margin = 0;
 	
 	MagickWand* science;
 	PixelIterator* iterator;
 	PixelWand** pixels;
-	
-	cowheader = !memcmp(basename2(binname), "img2cow", 7);
 	
 	while (*++argv)
 		if (**argv == '-')
@@ -413,13 +373,6 @@ int main(int argc, char** argv)
 					case '-':
 						if (!strcmp("help", ++*argv))
 							usage(0, binname);
-						else if (!strcmp("cow", *argv))
-							cowheader = 1;
-						else if (!strcmp("stem-length", *argv))
-						{
-							if (!*++argv || !sscanf(*argv, "%lu", &stemlen))
-								usage(1, binname);
-						}
 						else if (!strcmp("perceptive", *argv))
 							perceptive = 1;
 						else if (!strcmp("margin", *argv))
@@ -427,13 +380,6 @@ int main(int argc, char** argv)
 							if (!*++argv || !sscanf(*argv, "%lu", &margin))
 								usage(1, binname);
 						}
-						else if (!strcmp("stem-margin", *argv))
-						{
-							if (!*++argv || !sscanf(*argv, "%lu", &stemmargin))
-								usage(1, binname);
-						}
-						else if (!strcmp("stem-continue", *argv))
-							background = 1;
 #ifndef NO_CURSES
 						else if (!strcmp("terminfo", *argv))
 							use_terminfo = 1;
@@ -454,31 +400,17 @@ int main(int argc, char** argv)
 					case 'h':
 						usage(0, binname);
 						break;
-					case 'c':
-						cowheader = 1;
-						break;
 #ifndef NO_CURSES
 					case 'i':
 						use_terminfo = 1;
 						break;
 #endif
-					case 'l':
-						if (*++*argv || !*++argv || !sscanf(*argv, "%lu", &stemlen))
-							usage(1, binname);
-						goto nextarg;
 					case 'm':
 						if (*++*argv || !*++argv || !sscanf(*argv, "%lu", &margin))
 							usage(1, binname);
 						goto nextarg;
 					case 'p':
 						perceptive = 1;
-						break;
-					case 's':
-						if (*++*argv || !*++argv || !sscanf(*argv, "%lu", &stemmargin))
-							usage(1, binname);
-						goto nextarg;
-					case 't':
-						background = 1;
 						break;
 					case 'w':
 						if (*++*argv || !*++argv || !sscanf(*argv, "%lf", &chroma_weight))
@@ -500,9 +432,6 @@ int main(int argc, char** argv)
 			outfile_str = *argv;
 		else
 			usage(1, binname);
-	
-	if (!cowheader && background == 1)
-		background = 0;
 	
 #ifndef NO_CURSES
 	if (use_terminfo)
@@ -571,16 +500,6 @@ int main(int argc, char** argv)
 		for (i = 16; i < 256; i ++)
 			xterm2rgb(i, colortable + i * 3);
 	}
-	if (cowheader)
-	{
-		fputs("binmode STDOUT, \":utf8\";\n$the_cow =<<EOC;\n", outfile);
-		for (i = 0; i < stemlen; stemmargin ++, i ++)
-		{
-			for (j = 0; j < stemmargin; j ++)
-				fputc(' ', outfile);
-			fputs("$thoughts\n", outfile);
-		}
-	}
 	
 	pixels = PixelGetNextIteratorRow(iterator, &width1);
 	while (pixels)
@@ -599,33 +518,12 @@ int main(int argc, char** argv)
 			row2 = NULL;
 		
 		for (i = 0; i < margin; i ++)
-			if (background && i == stemmargin)
-				bifurcate(outfile, color_transparent, color_transparent, "$thoughts");
-			else
-				fputc(' ', outfile);
-		
-		if (background == 1 && lastpx1 < stemmargin + 1)
-			lastpx1 = stemmargin + 1;
+            fputc(' ', outfile);
 		
 		for (i = 0; i < lastpx1; i ++)
 		{
 			color1 = i < width1 ? row1[i] : color_transparent;
 			color2 = i < width2 ? row2 ? row2[i] : color_transparent : color_transparent;
-			if (background == 1)
-			{
-				if (i + margin == stemmargin)
-				{
-					if (color1 == color_transparent && color2 == color_transparent)
-					{
-						bifurcate(outfile, color1, color2, "$thoughts");
-						continue;
-					}
-					else
-						background = 0;
-				}
-				else if (i + margin == stemmargin + 1 && (color1 != color_transparent || color2 != color_transparent))
-					background = 0;
-			}
 			bifurcate(outfile, color1, color2, NULL);
 		}
 		
@@ -645,7 +543,7 @@ int main(int argc, char** argv)
 #endif
 			if (oldbg != color_transparent)
 			{
-				fputs(cowheader ? "\\e[49m\n" : "\e[49m\n", outfile);
+				fputs("\e[49m\n", outfile);
 				oldbg = color_transparent;
 			}
 			else
@@ -655,15 +553,10 @@ int main(int argc, char** argv)
 			fprintf(outfile, "%s\n", ti_op);
 #endif
 		else if (oldbg == color_transparent)
-			fputs(cowheader ? "\\e[39m\n" : "\e[39m\n", outfile);
+			fputs("\e[39m\n", outfile);
 		else
-			fputs(cowheader ? "\\e[39;49m\n" : "\e[39;49m\n", outfile);
-		
-		stemmargin ++;
+			fputs("\e[39;49m\n", outfile);
 	}
-	
-	if (cowheader)
-		fputs("\nEOC\n", outfile);
 	
 	DestroyPixelIterator(iterator);
 	DestroyMagickWand(science);

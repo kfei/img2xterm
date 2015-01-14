@@ -40,29 +40,12 @@ CPPFLAGS := $(CPPFLAGS) $(DEFS) $(shell $(WANDCONFIG) --cppflags)
 LDFLAGS := $(LDFLAGS) $(shell $(WANDCONFIG) --ldflags)
 LIBS := $(LIBS) $(shell $(WANDCONFIG) --libs)
 
-all: img2xterm man6/img2xterm.6.gz
+all: img2xterm
 
 img2xterm: img2xterm.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $< $(LDFLAGS) $(LIBS)
 
 .PHONY: all install clean
 
-man6:
-	mkdir man6
-
-man6/img2xterm.6.gz: man6/img2xterm.6 | man6
-	gzip -fc $< > $@
-
-man6/img2xterm.6: img2xterm.c | man6 img2xterm
-	help2man -s 6 -N -m " " --version-string="git" ./img2xterm -o $@
-
-install: img2xterm
-	$(INSTALL) -d $(PREFIX)/bin
-	$(INSTALL) -m 0755 img2xterm $(PREFIX)/bin/img2xterm
-	$(LN) $(PREFIX)/bin/img2xterm $(PREFIX)/bin/img2cow
-	$(INSTALL) -d $(PREFIX)/share/man/man6
-	$(INSTALL) -m 0644 man6/img2xterm.6.gz $(PREFIX)/share/man/man6/img2xterm.6.gz
-	$(LN) $(PREFIX)/share/man/man6/img2xterm.6.gz $(PREFIX)/share/man/man6/img2cow.6.gz
-
 clean:
-	-$(RM) img2xterm man6/img2xterm.6.gz
+	-$(RM) img2xterm
