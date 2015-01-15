@@ -1,71 +1,42 @@
-img2xterm: display images on the terminal
-=========================================
+# img2xterm
 
-img2xterm is a program that can display bitmap images on 256-colour terminals
-by converting them into Unicode block characters and xterm compatible control
-sequences. Based on software by [lachs0r] [1] and Xebec for creating colourful
-[cowfiles] [2], img2xterm improves on the colour selection and block printing
-logic, providing cleaner output on terminals with nice bitmap fonts.
+This project was originally a fork from [rossy/img2xterm][1].
 
-This is an example of a cowfile created with img2xterm's `--cow` option:
+[1](https://github.com/rossy/img2xterm)
 
-![Example of img2xterm in action.](http://img2xterm.sooaweso.me/demo.png)
+## Dependencies
 
-img2xterm uses a modified version of the algorithm used in [xterm256-conv] [3]
-in order to have an accurate representation of the upper 240 colours used in
-xterm. Modification was needed in order to fix the range of the grey ramp.
+Before compilation, make sure you have the development packages of
+[ImageMagick][2] (for MagickWand) and [Ncurses][3] (for *terminfo* support).
 
-[1]: http://srsfckn.biz/cows/img2cow.c
-[2]: http://www.nog.net/~tony/warez/cowsay.shtml
-[3]: http://frexx.de/xterm-256-notes
+[2]: http://www.imagemagick.org
+[3]: http://www.gnu.org/software/ncurses/ncurses.html
 
-Dependencies
-------------
+## Getting img2xterm
 
-Before compilation, make sure you have development versions of [ImageMagick]
-[4] (for MagickWand) and [Ncurses] [5] (for terminfo support.)
+The GNU Autotools are not required. To compile and install from source, simply
+run:
 
-[4]: http://www.imagemagick.org
-[5]: http://www.gnu.org/software/ncurses/ncurses.html
+```bash
+make
+make install
+```
+## Usage
 
-Getting img2xterm
------------------
+To display an image on a 256-color compatible terminal:
 
-  The GNU Autotools are not required. To compile and install from source,
-  simply run:
+```bash
+img2xterm image.jpg
+```
 
-    $ make
-    # make install
+Use *CIE94* for color difference algorithm:
 
-  A [GIMP] [6] palette containing the upper 240 colours used in xterm is also
-  available. It can be used for dithering images before conversion. To install,
-  run:
+```bash
+img2xterm -p image.jpg
+```
 
-    $ cd extra/
-    $ make
-    $ cp xterm-256color.gpl ~/.gimp-2.6/palettes/
+More usage:
 
-[6]: http://www.gimp.org
-
-Converting images
------------------
-
-  To display an image on a compatible 256-color terminal:
-
-    $ img2xterm image.png
-
-  `img2cow` is a symlink to the `img2xterm` command. When invoked in this way,
-  the program behaves as if the `--cow` option was used.
-
-  To generate a cowfile:
-
-    $ img2cow image.png image.cow
-    # cp image.cow /usr/share/cows
-
-Known issues
-------------
-
- * There is something wrong with the implementation of [CIE94 delta-E] [8].
- * ImageMagick can be glitchy. Perhaps using libpng would be a better idea.
-
-[8]: https://en.wikipedia.org/wiki/Color_difference#CIE94
+```bash
+img2xterm -h
+```
