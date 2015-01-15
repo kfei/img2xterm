@@ -332,6 +332,8 @@ int main(int argc, char** argv)
 	size_t width1, width2;
 	unsigned long i, * row1, * row2, color1, color2, lastpx1, lastpx2, margin = 0;
 
+	int bw = 0;
+
 	MagickWand* science;
 	PixelIterator* iterator;
 	PixelWand** pixels;
@@ -358,6 +360,8 @@ int main(int argc, char** argv)
 							usage(1, binname);
 					} else if (!strcmp("yiq", *argv))
 						perceptive = 2;
+					else if (!strcmp("bw", *argv))
+						bw = 1;
 					else {
 						fprintf(stderr, "%s: unrecognised long option --%s\n", binname, *argv);
 						usage(1, binname);
@@ -384,6 +388,9 @@ int main(int argc, char** argv)
 					goto nextarg;
 				case 'y':
 					perceptive = 2;
+					break;
+				case 'b':
+					bw = 1;
 					break;
 				default:
 					fprintf(stderr, "%s: unrecognised option -%c", binname, *--*argv);
@@ -423,6 +430,10 @@ nextarg:
 		DestroyMagickWand(science);
 		fprintf(stderr, "%s: couldn't open input file %s\n", binname, infile == stdin_str ? "<stdin>" : infile);
 		return 3;
+	}
+
+	if (bw) {
+		MagickTransformImageColorspace(science, GRAYColorspace);
 	}
 
 	if (!(iterator = NewPixelIterator(science))) {
