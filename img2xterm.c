@@ -311,6 +311,7 @@ Options:\n\
 #endif
 	        "\
   -m, --margin [width]        add a margin to the left of the image\n\
+  -b, --bw                    display image in black/white mode\n\
   -p, --perceptive            use the CIE94 color difference formula for color\n\
                               conversion instead of simple RGB linear distance\n\
   -w, --chroma-weight [mult]  weighting for chroma in --perceptive and --yiq\n\
