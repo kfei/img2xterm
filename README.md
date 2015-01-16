@@ -1,6 +1,10 @@
 # img2xterm
 
-This project was originally a fork from [rossy/img2xterm][1].
+This project was originally a fork from [rossy/img2xterm][1] with:
+
+  - Image auto fit to terminal
+  - Display in B/W mode
+  - Cowfile-related code deleted
 
 [1]: https://github.com/rossy/img2xterm
 
@@ -38,10 +42,11 @@ Use [CIE94][4] for color difference algorithm:
 img2xterm -p image.jpg
 ```
 
-Display in grayscale:
+Save image to file in grayscale:
 
 ```bash
-img2xterm -b image.jpg
+img2xterm -b image.jpg outfile
+cat outfile
 ```
 
 More usage:
