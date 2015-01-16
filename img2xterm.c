@@ -4,9 +4,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <limits.h>
 #include <math.h>
 #include <wand/MagickWand.h>
+#include <unistd.h>
 
 #ifndef NO_CURSES
 #include <term.h>
@@ -30,6 +32,7 @@ unsigned long oldfg = color_undef;
 unsigned long oldbg = color_undef;
 int perceptive = 0;
 double chroma_weight = 1.0;
+struct winsize w;
 
 #ifndef NO_CURSES
 int use_terminfo = 0;
@@ -273,6 +276,25 @@ unsigned long fillrow(PixelWand** pixels, unsigned long* row, unsigned long widt
 	return lastpx + 1;
 }
 
+void xtermfit(MagickWand* wand)
+{
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+	double wi = (double)MagickGetImageWidth(wand);
+	double hi = (double)MagickGetImageHeight(wand);
+	double ri = wi / hi;
+
+	double ws = (double)w.ws_col;
+	double hs = (double)w.ws_row * 2;
+	double rs = ws / hs;
+
+	int scaled_width = (int)floor(rs > ri ? wi * hs / hi : ws);
+	int scaled_height = (int)floor(rs > ri ? hs : hi * ws / wi);
+
+	MagickResizeImage(wand, scaled_width, scaled_height, LanczosFilter, 1);
+}
+
 void usage(int ret, const char* binname)
 {
 	fprintf(ret ? stderr: stdout,
@@ -435,6 +457,8 @@ nextarg:
 	if (bw) {
 		MagickTransformImageColorspace(science, GRAYColorspace);
 	}
+
+	xtermfit(science);
 
 	if (!(iterator = NewPixelIterator(science))) {
 		DestroyMagickWand(science);
