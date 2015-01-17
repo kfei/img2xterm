@@ -171,7 +171,7 @@ unsigned long rgb2xterm(unsigned char r, unsigned char g, unsigned char b)
 	return ret;
 }
 
-void bifurcate(FILE* file, unsigned long color1, unsigned long color2, char* bstr)
+void bifurcate(FILE* file, unsigned long color1, unsigned long color2)
 {
 	unsigned long fg = oldfg;
 	unsigned long bg = oldbg;
@@ -179,11 +179,7 @@ void bifurcate(FILE* file, unsigned long color1, unsigned long color2, char* bst
 
 	if (color1 == color2) {
 		bg = color1;
-		if (bstr && bg == color_transparent) {
-			fg = color_undef;
-			str = bstr;
-		} else
-			str = " ";
+		str = " ";
 	} else if (color2 == color_transparent) {
 		str = "\xe2\x96\x80";
 		bg = color2;
@@ -512,7 +508,7 @@ nextarg:
 		for (i = 0; i < lastpx1; i ++) {
 			color1 = i < width1 ? row1[i] : color_transparent;
 			color2 = i < width2 ? row2 ? row2[i] : color_transparent : color_transparent;
-			bifurcate(outfile, color1, color2, NULL);
+			bifurcate(outfile, color1, color2);
 		}
 
 		free(row1);
