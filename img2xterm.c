@@ -171,10 +171,29 @@ unsigned long rgb2xterm(unsigned char r, unsigned char g, unsigned char b)
 	return ret;
 }
 
+unsigned long rgb2xtermtc(unsigned char r, unsigned char g, unsigned char b)
+{
+    unsigned long red = r;
+    unsigned long green = g;
+    unsigned long blue = b;
+	unsigned long ret = 0;
+	ret |= (red << 16);
+    ret |= (green << 8);
+    ret |= blue;
+
+	return ret;
+}
+
 void bifurcate(FILE* file, unsigned long color1, unsigned long color2)
 {
 	unsigned long fg = oldfg;
 	unsigned long bg = oldbg;
+    unsigned long rbg = 0;
+    unsigned long gbg = 0;
+    unsigned long bbg = 0;
+    unsigned long rfg = 0;
+    unsigned long gfg = 0;
+    unsigned long bfg = 0;
 	char* str = "\xe2\x96\x84";
 
 	if (color1 == color2) {
@@ -204,17 +223,29 @@ void bifurcate(FILE* file, unsigned long color1, unsigned long color2)
 	} else
 #endif
 		if (bg != oldbg) {
-			if (bg == color_transparent)
+            if(perceptive == 3) {
+                rbg = (bg >> 16) & 0xff;
+                gbg = (bg >> 8) & 0xff;
+                bbg = bg & 0xff;
+                fprintf(file, "\e[48;2;%lu;%lu;%lum", rbg, gbg, bbg);
+            } else if (bg == color_transparent) {
 				fputs("\e[49m", file);
-			else
+            } else {
 				fprintf(file, "\e[48;5;%lum", bg);
+            }
 		}
 
 	if (fg != oldfg) {
-		if (fg == color_undef)
+        if(perceptive == 3) {
+                rfg = (fg >> 16) & 0xff;
+                gfg = (fg >> 8) & 0xff;
+                bfg = fg & 0xff;
+                fprintf(file, "\e[38;2;%lu;%lu;%lum", rfg, gfg, bfg);
+        } else if (fg == color_undef) {
 			fputs("\e[39m", file);
-		else
+        } else {
 			fprintf(file, "\e[38;5;%lum", fg);
+        }
 	}
 
 	oldbg = bg;
@@ -260,6 +291,20 @@ unsigned long fillrow(PixelWand** pixels, unsigned long* row, unsigned long widt
 				row[i] = color_transparent;
 			else {
 				row[i] = rgb2xterm_yiq(
+				                 (unsigned long)(PixelGetRed(pixels[i]) * 255.0),
+				                 (unsigned long)(PixelGetGreen(pixels[i]) * 255.0),
+				                 (unsigned long)(PixelGetBlue(pixels[i]) * 255.0));
+				lastpx = i;
+			}
+		}
+		break;
+
+	case 3: // truecolor
+		for (; i < width; i ++) {
+			if (PixelGetAlpha(pixels[i]) < 0.5) {
+				row[i] = color_transparent;
+            } else {
+				row[i] = rgb2xtermtc(
 				                 (unsigned long)(PixelGetRed(pixels[i]) * 255.0),
 				                 (unsigned long)(PixelGetGreen(pixels[i]) * 255.0),
 				                 (unsigned long)(PixelGetBlue(pixels[i]) * 255.0));
@@ -314,6 +359,7 @@ Options:\n\
                               modes (default: 1)\n\
   -y, --yiq                   use linear distance in the YIQ color space\n\
                               instead of RGB for color conversion\n\
+  -t, --truecolor             output truecolor terminal codes\n\
 \n\
 If the output file name is omitted the image is written to stdout. If both the\n\
 input file name and the output file name are missing, img2xterm will act as a\n\
@@ -366,6 +412,8 @@ int main(int argc, char** argv)
 						usage(0, binname);
 					else if (!strcmp("perceptive", *argv))
 						perceptive = 1;
+					else if (!strcmp("truecolor", *argv))
+						perceptive = 3;
 					else if (!strcmp("margin", *argv)) {
 						if (!*++argv || !sscanf(*argv, "%lu", &margin))
 							usage(1, binname);
@@ -407,6 +455,9 @@ int main(int argc, char** argv)
 					goto nextarg;
 				case 'y':
 					perceptive = 2;
+                    break;
+				case 't':
+					perceptive = 3;
 					break;
 				case 'b':
 					bw = 1;
